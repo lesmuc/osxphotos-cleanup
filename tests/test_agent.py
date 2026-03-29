@@ -29,7 +29,7 @@ def test_analyze_single_photo():
 
     result = analyze_photo(photo, "/Users/udo/Desktop/B1E37851-98C1-43AC-9F7E-33803523E1FA_1_105_c.jpeg")
     print(f"Description: {result.description}")
-    print(f"Quality: {result.quality_assessment}")
+    print(f"Quality: {result.cleanup_assessment}")
     print(f"Meaningful: {result.is_meaningful}")
     print(f"Action: {result.suggestedAction}")
     print(f"Reason: {result.reason}")

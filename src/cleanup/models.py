@@ -49,12 +49,8 @@ class LibrarySummary(BaseModel):
     bursts: int
 
 class PhotoAnalysis(BaseModel):
-    description: str
-    quality_assessment: str
-    is_meaningful: bool
     suggestedAction: SuggestedAction
     reason: str
-    confidence: float
 
 # Container für PhotoMetadata und PhotoInfo aus osxphotos
 @dataclass

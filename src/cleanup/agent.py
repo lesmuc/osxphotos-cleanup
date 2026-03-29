@@ -21,22 +21,6 @@ model = OpenAIModel(
         base_url="http://localhost:11434/v1",                                                
         api_key="ollama",                                                                    
     ),                                                                                       
-)  
-
-photo_analyst = Agent(
-    model,
-    deps_type=AgentDeps,
-    result_type=PhotoAnalysis,
-    system_prompt=(
-        "You are a photo library cleanup assistant. "                                                                                                                      
-        "This photo was flagged because it appears to show food or drinks. "                                                                                               
-        "Your job is to decide: is this a meaningful memory worth keeping, "                                                                                               
-        "or just a casual food/drink snapshot that can be deleted? "                                                                                                       
-        "Photos of food or drinks WITHOUT people should usually be deleted. "                                                                                              
-        "Only suggest 'keep' if the photo has clear sentimental or artistic value "                                                                                        
-        "beyond just showing food or drinks. "                                                                                                                             
-        "Respond with valid JSON matching the output schema."
-    ),    
 )
 
 register_heif_opener()
@@ -58,7 +42,7 @@ def analyze_photo(photo: ScannedPhoto, reason: str, on_status=None) -> PhotoAnal
         else:
             if on_status:
                 on_status("    Lade aus iCloud...")
-                
+
             # Foto nur in der Cloud
             exported = photo.photo_info.export(
                 tmpdir,
@@ -72,29 +56,40 @@ def analyze_photo(photo: ScannedPhoto, reason: str, on_status=None) -> PhotoAnal
             on_status("    Sende an Ollama...")
 
         response = chat(
-            model="llama3.2-vision:11b",
+            model="gemma3:27b",
             messages=[
                 {
                     "role": "system",
                     "content": (
                         "You are a photo library cleanup assistant. "
-                        "Analyze the photo and its metadata. "
-                        "Determine if it should be kept, deleted, or reviewed. "
-                        "Be conservative — when in doubt, suggest 'review'."
+                        "This photo was flagged as a food or drink photo without people. "
+                        "Photos showing ONLY food, drinks, bottles, or glasses "
+                        "without any people visible should be marked as 'delete'. "
+                        "Only suggest 'keep' if the photo clearly shows people, "
+                        "a meaningful event, or a recognizable landmark. "
+                        "A nice-looking bottle or glass alone is NOT a reason to keep."
                     ),
                 },
                 {
                     "role": "user",
                     "content": (
-                        f"This photo was flagged for cleanup. Reason: {reason}. "                                                                                                          
-                        f"Metadata: filename={photo.metadata.filename}, "     
-                        f"date={photo.metadata.date}, size={photo.metadata.file_size_bytes} bytes, "                                                                                       
-                        f"labels={photo.metadata.labels}, persons={photo.metadata.persons}"
+                        f"This photo was flagged for cleanup. Reason: {reason}. "
+                        f"Should it be kept or deleted? Answer with 'keep' or 'delete' and a short reason."
                     ),
                     "images": [jpeg_path],
                 },
             ],
-            format=PhotoAnalysis.model_json_schema(),
         )
 
-        return PhotoAnalysis.model_validate_json(response.message.content)
+        text = response.message.content.lower()
+        if "delete" in text:
+            action = SuggestedAction.DELETE
+        elif "keep" in text:
+            action = SuggestedAction.KEEP
+        else:
+            action = SuggestedAction.REVIEW
+
+        return PhotoAnalysis(
+            suggestedAction=action,
+            reason=response.message.content,
+        )

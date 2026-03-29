@@ -48,7 +48,6 @@ def main(limit, dry_run, no_ai):
                     analysis = analyze_photo(photo, s.reason, on_status=click.echo)
                     s.action = analysis.suggestedAction
                     s.reason = f"AI: {analysis.reason}"
-                    s.confidence = analysis.confidence
                     click.echo(f"  {photo.metadata.original_filename}: {analysis.suggestedAction.value} — {analysis.reason}")
 
     # 4. Zusammenfassung
