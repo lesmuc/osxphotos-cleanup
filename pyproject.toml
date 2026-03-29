@@ -1,0 +1,32 @@
+[project]
+name = "osxphotos-cleanup"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "click>=8.0.1",
+    "ollama>=0.6.1",
+    "osxphotos>=0.42.80",
+    "photoscript>=0.1.4",
+    "pillow-heif>=1.3.0",
+    "pydantic-ai>=0.0.33",
+]
+
+[project.scripts]
+cleanup = "cleanup.cli:main"
+
+[build-system]                                                                                                                                                                                                                                              
+requires = ["setuptools"]                                                                                                                                                                                                                                   
+build-backend = "setuptools.build_meta"  
+
+[tool.uv]
+constraint-dependencies = ["pyobjc-framework-coremedia>=11.0"]
+
+[tool.setuptools.packages.find]                                                                                                                                                                                                                             
+where = ["src"]  
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
